@@ -1,10 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+case "${1:-}" in
+  nightly|preview|stable)
+    ;;
+  *)
+    echo "Error: Invalid argument '${1:-}'"
+    echo "Usage: $0 {nightly|preview|stable}"
+    exit 1
+    ;;
+esac
+
 which gh >/dev/null || brew install gh
 
 if [ "$1" == "nightly" ]; then
-  ./script/bump-nightly
+  git fetch origin main:tags/nightly -f
+  git log --oneline -1 nightly
+  git push -f origin nightly
   exit
 fi
 

@@ -132,32 +132,6 @@ pub struct RemoteCommandOutput {
     pub stderr: String,
 }
 
-#[derive(Debug, Clone)]
-pub struct GitCommandOutput {
-    pub stdout: String,
-    pub stderr: String,
-}
-
-impl std::fmt::Display for GitCommandOutput {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let stderr = self.stderr.trim();
-        let message = if stderr.is_empty() {
-            self.stdout.trim()
-        } else {
-            stderr
-        };
-        write!(f, "{}", message)
-    }
-}
-
-impl std::error::Error for GitCommandOutput {}
-
-impl GitCommandOutput {
-    pub fn is_empty(&self) -> bool {
-        self.stdout.is_empty() && self.stderr.is_empty()
-    }
-}
-
 impl RemoteCommandOutput {
     pub fn is_empty(&self) -> bool {
         self.stdout.is_empty() && self.stderr.is_empty()
@@ -1104,7 +1078,7 @@ impl GitRepository for RealGitRepository {
                 let branch = branch.await?;
 
                 match GitBinary::new(git_binary_path, working_directory?, executor)
-                    .run_with_output(&["checkout", &branch])
+                    .run(&["checkout", &branch])
                     .await
                 {
                     Ok(_) => anyhow::Ok(()),
@@ -1139,7 +1113,7 @@ impl GitRepository for RealGitRepository {
         self.executor
             .spawn(async move {
                 match GitBinary::new(git_binary_path, working_directory?, executor)
-                    .run_with_output(&["branch", "-m", &branch, &new_name])
+                    .run(&["branch", "-m", &branch, &new_name])
                     .await
                 {
                     Ok(_) => Ok(()),
@@ -1863,31 +1837,6 @@ impl GitBinary {
             stdout.pop();
         }
         Ok(stdout)
-    }
-
-    pub async fn run_with_output<S>(
-        &self,
-        args: impl IntoIterator<Item = S>,
-    ) -> Result<GitCommandOutput>
-    where
-        S: AsRef<OsStr>,
-    {
-        let mut command = self.build_command(args);
-        let output = command.output().await?;
-
-        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-
-        if !output.status.success() {
-            return Err(GitBinaryCommandError {
-                stdout: stdout.clone(),
-                stderr: stderr.clone(),
-                status: output.status,
-            }
-            .into());
-        }
-
-        Ok(GitCommandOutput { stdout, stderr })
     }
 
     /// Returns the result of the command without trimming the trailing newline.

@@ -1077,18 +1077,10 @@ impl GitRepository for RealGitRepository {
             .spawn(async move {
                 let branch = branch.await?;
 
-                match GitBinary::new(git_binary_path, working_directory?, executor)
+                GitBinary::new(git_binary_path, working_directory?, executor)
                     .run(&["checkout", &branch])
-                    .await
-                {
-                    Ok(_) => anyhow::Ok(()),
-                    Err(e) => {
-                        if let Some(git_error) = e.downcast_ref::<GitBinaryCommandError>() {
-                            anyhow::bail!("{}", git_error.stderr.trim());
-                        }
-                        Err(e)
-                    }
-                }
+                    .await?;
+                anyhow::Ok(())
             })
             .boxed()
     }
@@ -1112,18 +1104,10 @@ impl GitRepository for RealGitRepository {
 
         self.executor
             .spawn(async move {
-                match GitBinary::new(git_binary_path, working_directory?, executor)
+                GitBinary::new(git_binary_path, working_directory?, executor)
                     .run(&["branch", "-m", &branch, &new_name])
-                    .await
-                {
-                    Ok(_) => Ok(()),
-                    Err(e) => {
-                        if let Some(git_error) = e.downcast_ref::<GitBinaryCommandError>() {
-                            anyhow::bail!("{}", git_error.stderr.trim());
-                        }
-                        Err(e)
-                    }
-                }
+                    .await?;
+                anyhow::Ok(())
             })
             .boxed()
     }

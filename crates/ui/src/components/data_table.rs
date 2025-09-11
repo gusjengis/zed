@@ -64,10 +64,29 @@ pub struct ShowScrollbarConfig {
     pub vertical: ShowScrollbarAxisConfig,
 }
 
+impl ShowScrollbarConfig {
+    pub fn never(_: &mut App) -> Self {
+        Self {
+            horizontal: ShowScrollbarAxisConfig::never(),
+            vertical: ShowScrollbarAxisConfig::never(),
+        }
+    }
+}
+
 pub struct ShowScrollbarAxisConfig {
     pub scrollbar: bool,
     pub track: bool,
     pub auto_hide: bool,
+}
+
+impl ShowScrollbarAxisConfig {
+    pub fn never() -> Self {
+        Self {
+            scrollbar: false,
+            track: false,
+            auto_hide: false,
+        }
+    }
 }
 
 fn show_scrollbars_default(_cx: &mut App) -> ShowScrollbarConfig {

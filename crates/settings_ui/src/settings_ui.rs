@@ -17,7 +17,7 @@ use settings::{
 };
 use smallvec::SmallVec;
 use ui::{
-    NumericStepper, SwitchField, TableInteractionState, ToggleButtonGroup, ToggleButtonSimple,
+    NumericStepper, SwitchField, ToggleButtonGroup, ToggleButtonSimple,
     prelude::*,
 };
 use workspace::{

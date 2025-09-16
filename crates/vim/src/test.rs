@@ -7,12 +7,12 @@ use std::time::Duration;
 use collections::HashMap;
 use command_palette::CommandPalette;
 use editor::{
-    AnchorRangeExt, DisplayPoint, Editor, EditorMode, MultiBuffer, actions::DeleteLine,
-    code_context_menus::CodeContextMenu, display_map::DisplayRow,
-    test::editor_test_context::EditorTestContext,
+    actions::DeleteLine, code_context_menus::CodeContextMenu, display_map::DisplayRow,
+    test::editor_test_context::EditorTestContext, AnchorRangeExt, DisplayPoint, Editor, EditorMode,
+    MultiBuffer,
 };
 use futures::StreamExt;
-use gpui::{KeyBinding, Modifiers, MouseButton, TestAppContext, px};
+use gpui::{px, KeyBinding, Modifiers, MouseButton, TestAppContext};
 use language::Point;
 pub use neovim_backed_test_context::*;
 use settings::SettingsStore;
@@ -24,7 +24,7 @@ use indoc::indoc;
 use search::BufferSearchBar;
 use workspace::WorkspaceSettings;
 
-use crate::{PushSneak, PushSneakBackward, insert::NormalBefore, motion, state::Mode};
+use crate::{insert::NormalBefore, motion, state::Mode, PushSneak, PushSneakBackward};
 
 #[gpui::test]
 async fn test_initially_disabled(cx: &mut gpui::TestAppContext) {
@@ -103,6 +103,19 @@ async fn test_cancel_selection(cx: &mut gpui::TestAppContext) {
     // Ctrl-[ should behave like Esc
     cx.simulate_keystrokes("ctrl-[");
     cx.assert_editor_state("The quick brown fox juˇmps over the lazy dog");
+}
+
+#[gpui::test]
+async fn test_cmd_shift_right(cx: &mut gpui::TestAppContext) {
+    let mut cx = VimTestContext::new(cx, true).await;
+
+    cx.set_state(
+        indoc! {"ˇThe quick brown fox jumps over the lazy dog"},
+        Mode::Normal,
+    );
+    // jumps
+    cx.simulate_keystrokes("shift-end");
+    cx.assert_editor_state("«The quick brown fox jumps over the lazy dogˇ»");
 }
 
 #[gpui::test]
@@ -231,9 +244,7 @@ async fn test_escape_command_palette(cx: &mut gpui::TestAppContext) {
     cx.set_state("aˇbc\n", Mode::Normal);
     cx.simulate_keystrokes("i cmd-shift-p");
 
-    assert!(
-        cx.workspace(|workspace, _, cx| workspace.active_modal::<CommandPalette>(cx).is_some())
-    );
+    assert!(cx.workspace(|workspace, _, cx| workspace.active_modal::<CommandPalette>(cx).is_some()));
     cx.simulate_keystrokes("escape");
     cx.run_until_parked();
     assert!(
